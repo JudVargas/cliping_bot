@@ -1,0 +1,36 @@
+# Datos del proyecto (videos, audio, transcripciones, clips) - ignorar en git
+data/
+
+# Variables de entorno
+.env
+
+# Python
+__pycache__/
+*.py[c]
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+.build/
+.dist/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pruebas
+.pytest_cache/
+.coverage
+htmlcov/
