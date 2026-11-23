@@ -4,6 +4,7 @@ import { VideosPage } from '../features/videos/VideoList'
 import { MomentsPage } from '../features/moments/MomentList'
 import { EditorPage } from '../features/editor/ClipEditor'
 import { SettingsPage } from '../features/editor/Settings'
+import { Navigate } from 'react-router-dom'
 
 const rootLayout: RouteObject = {
   path: '/',
@@ -12,6 +13,10 @@ const rootLayout: RouteObject = {
     {
       path: '',
       element: <VideosPage />,
+    },
+    {
+      path: 'clips',
+      element: <Navigate to="/" replace={true} />,
     },
     {
       path: 'videos/:videoId',
@@ -28,4 +33,8 @@ const rootLayout: RouteObject = {
   ],
 }
 
-export const router = createBrowserRouter([rootLayout])
+export const router = createBrowserRouter([rootLayout], {
+  future: {
+    v7_startTransition: true,
+  },
+})
