@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useVideos, useUploadVideo } from '../../lib/hooks'
-import { UploadZone } from '../upload/UploadZone'
+import { UploadZone, UploadProgress } from '../upload/UploadZone'
 import { VideoCard } from './VideoCard'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useNavigate } from 'react-router-dom'
@@ -51,7 +51,7 @@ export function VideosPage() {
 
       {files && (
         <div className="mb-4">
-          <UploadZone.UploadProgress
+          <UploadProgress
             progress={uploadMutation.isPending ? 50 : 0}
             filename={files[0]?.name ?? ''}
             onCancel={() => { setFiles(null); uploadMutation.reset() }}
