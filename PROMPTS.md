@@ -183,6 +183,10 @@ Criterio de aceptación: flujo completo desde la web, sin tocar la terminal.
 - Modo LLM local con Ollama (modelo de 7B cuantizado) como alternativa sin internet.
 ```
 
+Usa los skills ui-responsive, ui-futurista y ui-componentes-clipforge.
+Primero propón la estructura de componentes y espera mi OK. 
+
+
 ---
 
 ## Prompt de rescate (cuando el modelo se atasca)
