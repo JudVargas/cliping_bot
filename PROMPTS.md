@@ -184,7 +184,7 @@ Criterio de aceptación: flujo completo desde la web, sin tocar la terminal.
 ```
 
 Usa los skills ui-responsive, ui-futurista y ui-componentes-clipforge.
-Primero propón la estructura de componentes y espera mi OK. 
+Primero propón la estructura de componentes y espera mi OK.   
 
 
 ---
