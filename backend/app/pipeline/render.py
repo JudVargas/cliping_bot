@@ -3,9 +3,10 @@
 - render_clip(video_path, start, end, out_path): corta un clip con FFmpeg.
   Usa h264_nvenc si está disponible, si no libx264. Audio aac.
   Corte exacto con -ss y -to (reencodeo, no copy).
+  Opcionalmente quema subtítulos .ass (filtro `ass` de FFmpeg).
 - render_all_from_moments(video_id): lee moments.json y exporta todos los clips
   a data/<video_id>/clips/.
-- CLI: python -m app.pipeline.render <video_id> [--top N]
+- CLI: python -m app.pipeline.render <video_id> [--top N] [--captions <estilo>]
 
 Nunca se usa shell=True; se pasan listas de argumentos a subprocess.
 """
@@ -16,12 +17,15 @@ import json
 import logging
 import os
 import subprocess
+import tempfile
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
 from app.config import settings
+from app.pipeline.captions import generate_ass, available_styles
 from app.pipeline.moments import Moment, select_moments
+from app.pipeline.transcribe import Word, _load_transcript
 
 logger = logging.getLogger(__name__)
 
@@ -58,12 +62,17 @@ def render_clip(
     out_path: str | Path,
     *,
     encoder: str | None = None,
+    captions_style: str | None = None,
+    words: list[Word] | None = None,
 ) -> Path:
     """Renderizar un clip del video original.
 
     Corta el tramo [start, end] con reencodeo (no copy) para garantizar un
     corte exacto. Video: h264_nvenc (GPU) con fallback a libx264 (CPU).
     Audio: aac.
+
+    Si se indican captions_style y words, se genera un .ass temporal y se
+    queman los subtítulos con el filtro `ass` de FFmpeg.
 
     Devuelve la ruta al archivo de salida.
     """
@@ -79,6 +88,18 @@ def render_clip(
 
     duration = end - start
     video_encoder = encoder or _pick_video_encoder(settings.VIDEO_ENCODER)
+
+    # Si hay subtítulos, generar .ass temporal
+    ass_path: Path | None = None
+    if captions_style:
+        if captions_style not in available_styles():
+            raise ValueError(
+                f"Estilo '{captions_style}' no disponible. "
+                f"Opciones: {available_styles()}"
+            )
+        clip_words = words or []
+        ass_path = Path(tempfile.gettempdir()) / f"{out_path.stem}.ass"
+        generate_ass(clip_words, start, captions_style, ass_path)
 
     # -ss antes de -i para seek rápido (keyframe), -to para fin exacto.
     # Reencodeo para corte frame-accurate.
@@ -98,8 +119,15 @@ def render_clip(
         "-c:a", "aac",
         "-b:a", "128k",
         "-movflags", "+faststart",
-        str(out_path),
     ]
+
+    # Filtro de subtítulos (quemar .ass en el video)
+    if ass_path is not None:
+        ass_filter = _ass_filter_path(ass_path)
+        cmd.extend(["-vf", ass_filter])
+
+    cmd.append(str(out_path))
+
     # Eliminar argumentos vacíos
     cmd = [c for c in cmd if c != ""]
 
@@ -113,15 +141,39 @@ def render_clip(
                 result.stderr.strip()[:200],
             )
             return render_clip(
-                video_path, start, end, out_path, encoder="libx264"
+                video_path, start, end, out_path,
+                encoder="libx264",
+                captions_style=captions_style,
+                words=words,
             )
         raise RuntimeError(
             f"ffmpeg falló renderizando {video_path} [{start}-{end}]: "
             f"{result.stderr.strip()}"
         )
 
+    # Limpiar archivo .ass temporal
+    if ass_path is not None and ass_path.exists():
+        try:
+            ass_path.unlink()
+        except OSError:
+            pass
+
     logger.info("Clip renderizado: %s (%.1fs - %.1fs)", out_path, start, end)
     return out_path
+
+
+def _ass_filter_path(ass_path: Path) -> str:
+    """Construir el argumento -vf ass= con la ruta escapada para Windows.
+
+    En Windows las barras invertidas y los dos puntos de la ruta pueden
+    romper el filtro de FFmpeg. Se convierte a barras normales (/) que FFmpeg
+    acepta en Windows, y se escapan los caracteres especiales.
+    """
+    # Usar barras normales (FFmpeg en Windows acepta C:/ruta/archivo.ass)
+    posix = ass_path.as_posix()
+    # Escapar backslash y dos puntos por si acaso quedan
+    escaped = posix.replace("\\", "\\\\").replace(":", "\\:")
+    return f"ass={escaped}"
 
 
 def render_all_from_moments(
@@ -129,11 +181,15 @@ def render_all_from_moments(
     *,
     top: int | None = None,
     force: bool = False,
+    captions_style: str | None = None,
 ) -> list[Path]:
     """Renderizar todos los momentos de un video.
 
     Lee moments.json (calculándolo si no existe) y exporta cada clip a
     data/<video_id>/clips/clip_XXX.mp4.
+
+    Si captions_style se indica, se cargan las palabras de transcript.json
+    dentro del rango de cada clip y se queman los subtítulos.
 
     Devuelve la lista de rutas de los clips generados.
     """
@@ -149,7 +205,20 @@ def render_all_from_moments(
         logger.warning("No hay momentos para renderizar en %s", video_id)
         return []
 
+    # Cargar transcript una sola vez si necesitamos subtítulos
+    transcript = None
+    if captions_style:
+        transcript_path = data_dir / "transcript.json"
+        if transcript_path.exists():
+            transcript = _load_transcript(transcript_path)
+        else:
+            logger.warning(
+                "No se encontró transcript.json para %s; sin subtítulos",
+                video_id,
+            )
+
     output_paths: list[Path] = []
+    clips_with_moments: list[tuple[Moment, Path]] = []
     for idx, moment in enumerate(moments):
         out_name = f"clip_{idx:03d}_{moment.id:03d}.mp4"
         out_path = clips_dir / out_name
@@ -157,13 +226,25 @@ def render_all_from_moments(
             "Renderizando clip %d/%d: %.1f-%.1f (%s)",
             idx + 1, len(moments), moment.start, moment.end, moment.title,
         )
+
+        # Palabras del transcript dentro del rango de este clip
+        clip_words: list[Word] | None = None
+        if transcript is not None:
+            clip_words = [
+                w for w in transcript.words
+                if w.start >= moment.start and w.end <= moment.end
+            ]
+
         render_clip(
             video_path,
             moment.start,
             moment.end,
             out_path,
+            captions_style=captions_style,
+            words=clip_words,
         )
         output_paths.append(out_path)
+        clips_with_moments.append((moment, out_path))
 
     logger.info(
         "Todos los clips renderizados: %d en %s", len(output_paths), clips_dir
@@ -240,9 +321,18 @@ if __name__ == "__main__":
         action="store_true",
         help="Forzar recálculo de moments.json",
     )
+    parser.add_argument(
+        "--captions",
+        choices=available_styles(),
+        default=None,
+        help="Estilo de subtítulos a quemar (clasico, resaltado, minimal)",
+    )
     args = parser.parse_args()
 
     clips = render_all_from_moments(
-        args.video_id, top=args.top, force=args.force
+        args.video_id,
+        top=args.top,
+        force=args.force,
+        captions_style=args.captions,
     )
     print(json.dumps([str(p) for p in clips], ensure_ascii=False, indent=2))
