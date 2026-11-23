@@ -7,27 +7,25 @@ import { SettingsPage } from '../features/editor/Settings'
 
 const rootLayout: RouteObject = {
   path: '/',
-  element: React.createElement(Shell),
+  element: <Shell />,
   children: [
     {
       path: '',
-      element: React.createElement(VideosPage),
+      element: <VideosPage />,
     },
     {
       path: 'videos/:videoId',
-      element: React.createElement(MomentsPage),
+      element: <MomentsPage />,
     },
     {
       path: 'clips/:momentId',
-      element: React.createElement(EditorPage),
+      element: <EditorPage />,
     },
     {
       path: 'ajustes',
-      element: React.createElement(SettingsPage),
+      element: <SettingsPage />,
     },
   ],
 }
 
 export const router = createBrowserRouter([rootLayout])
-
-import * as React from 'react'
