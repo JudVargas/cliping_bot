@@ -19,26 +19,36 @@ export function VideoCard({ video, onSelect }: VideoCardProps) {
   }
 
   const status = STATUS_CONFIG[video.status] || STATUS_CONFIG.uploaded
+  const duration = video.duration !== undefined && video.duration !== null
 
   return (
     <article
-      className="surface p-4 rounded-panel border border-line hover:border-plasma/50 transition-colors cursor-pointer group"
+      className="surface p-3 md:p-4 rounded-panel border border-line cursor-pointer group transition-all duration-200 hover:border-plasma/50 hover:shadow-md"
       onClick={() => onSelect(video.id)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter') onSelect(video.id) }}
     >
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="font-sora font-semibold text-base text-ink line-clamp-1">{video.filename}</h3>
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 md:gap-3 mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-sora font-semibold text-sm md:text-base text-ink line-clamp-1 leading-tight">
+            {video.filename}
+          </h3>
+          {duration && (
+            <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-1">
+              <span className="font-mono">{formatTime(video.duration)}</span>
+              {video.width && video.height && (
+                <>
+                  <span>·</span>
+                  <span>{video.width}×{video.height}</span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <Chip variant={status.variant} size="sm">{status.label}</Chip>
       </div>
-      {video.duration !== undefined && video.duration !== null && (
-        <div className="flex items-center gap-2 text-xs text-ink-muted mb-3">
-          <span className="font-mono">{formatTime(video.duration)}</span>
-          <span>·</span>
-          {video.width && video.height && <span>{video.width}×{video.height}</span>}
-        </div>
-      )}
+
       <PipelineStages
         stages={{
           ingest: video.status === 'uploaded' ? { status: 'done', progress: 100 } : { status: 'pending', progress: 0 },
@@ -47,14 +57,15 @@ export function VideoCard({ video, onSelect }: VideoCardProps) {
           render: video.status === 'ready' ? { status: 'done', progress: 100 } : { status: 'pending', progress: 0 },
         }}
       />
+
       {video.error_message && (
-        <div className="mt-3 flex items-center gap-1 text-[11px] text-flare">
+        <div className="mt-3 flex items-center gap-1.5 text-[10px] md:text-xs text-flare">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span>{video.error_message}</span>
+          <span className="line-clamp-1">{video.error_message}</span>
         </div>
       )}
     </article>
