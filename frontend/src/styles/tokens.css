@@ -1,0 +1,79 @@
+:root {
+  --color-void: #060914;
+  --color-panel: #0D1330;
+  --color-panel-2: #141C45;
+  --color-line: #26306A;
+  --color-ink: #E8ECFF;
+  --color-ink-muted: #8D97C4;
+  --color-plasma: #7C5CFF;
+  --color-plasma-soft: #A99BFF;
+  --color-ion: #2DE2E6;
+  --color-flare: #FF4D8D;
+  --color-ok: #3DF5A7;
+  --color-warn: #FFC857;
+
+  --radius-field: 8px;
+  --radius-panel: 16px;
+  --radius-pill: 999px;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
+}
+
+html {
+  lang: es;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Rejilla de fondo muy sutil */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Gradiente radial tenue en una esquina */
+body::after {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, color-mix(in oklab, var(--color-plasma) 12%, transparent) 0%, transparent 70%);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: dvh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

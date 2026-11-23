@@ -1,0 +1,192 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  h1, h2, h3, h4 {
+    font-family: var(--font-sora), system-ui, sans-serif;
+    font-weight: 600;
+    color: var(--color-ink);
+    line-height: 1.15;
+  }
+
+  h1 { font-size: clamp(1.5rem, 1.1rem + 2vw, 2.5rem); }
+  h2 { font-size: clamp(1.25rem, 1rem + 1.5vw, 2rem); }
+  h3 { font-size: clamp(1rem, 0.9rem + 1vw, 1.5rem); }
+
+  p, span, div, label, button, input, select, textarea {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+  }
+
+  .font-mono {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Focus visible consistente */
+  :focus-visible {
+    outline: 2px solid var(--color-ion);
+    outline-offset: 2px;
+  }
+
+  /* Scrollbar sutil */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-void);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border-radius: var(--radius-pill);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-muted);
+  }
+}
+
+@layer components {
+  .surface {
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+  }
+
+  .surface-2 {
+    background-color: var(--color-panel-2);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-field);
+  }
+
+  .surface-glass {
+    background: color-mix(in oklab, var(--color-panel) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid color-mix(in oklab, var(--color-ion) 18%, var(--color-line));
+    border-radius: var(--radius-panel);
+  }
+
+  .clip-frame {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    border-radius: 20px;
+    padding: 2px;
+    background: var(--color-line);
+    max-height: min(70dvh, 48rem);
+    margin: 0 auto;
+  }
+
+  .clip-frame[data-busy='true'] {
+    background: conic-gradient(from 0deg, var(--color-plasma), var(--color-ion), var(--color-flare), var(--color-plasma));
+    animation: spin 3s linear infinite;
+  }
+
+  .clip-frame > .inner {
+    border-radius: 18px;
+    background-color: var(--color-void);
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+  }
+
+  @keyframes spin {
+    to { --angle: 360deg; }
+  }
+
+  /* Botón primario */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-plasma);
+    color: white;
+    border: none;
+    border-radius: var(--radius-field);
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--font-manrope);
+    cursor: pointer;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Botón secundario */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+    border-radius: var(--radius-field);
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--color-ink-muted);
+  }
+
+  /* Botón destructivo */
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-flare);
+    color: white;
+    border: none;
+    border-radius: var(--radius-field);
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .input {
+    width: 100%;
+    background-color: var(--color-panel-2);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+    border-radius: var(--radius-field);
+    padding: 0.625rem 0.875rem;
+    font-size: 1rem;
+    font-family: var(--font-manrope);
+  }
+  .input:focus {
+    border-color: var(--color-ion);
+    outline: none;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-panel-2) 25%, var(--color-line) 50%, var(--color-panel-2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-field);
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
