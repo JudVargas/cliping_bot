@@ -1,12 +1,12 @@
 """API de ClipForge (FastAPI).
 
-Endpoints:
-- POST /videos (subir archivo) -> crea video y lanza pipeline en segundo plano
-- GET /videos, GET /videos/{id}
-- GET /videos/{id}/moments, PATCH /moments/{id} (editar start, end, title)
-- POST /moments/{id}/render (opciones: estilo de subtitulos, modo de encuadre, quitar silencios)
-- GET /clips/{id}/download
-- GET /jobs/{id} con estado y progreso (polling)
+Endpoints (todos con prefijo /api):
+- POST /api/videos (subir archivo) -> crea video y lanza pipeline en segundo plano
+- GET /api/videos, GET /api/videos/{id}
+- GET /api/videos/{id}/moments, PATCH /api/moments/{id} (editar start, end, title)
+- POST /api/moments/{id}/render (opciones: estilo de subtitulos, modo de encuadre, quitar silencios)
+- GET /api/clips/{id}/download
+- GET /api/jobs/{id} con estado y progreso (polling)
 
 Un solo worker a la vez (GPU 6 GB). Reanudar desde la ultima etapa completada.
 """
@@ -17,7 +17,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import APIRouter, FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -33,6 +33,9 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="ClipForge", version="0.1.0")
+
+# Router con prefijo /api para todas las rutas
+api_router = APIRouter(prefix="/api")
 
 
 # ============================================================================
@@ -111,7 +114,7 @@ def _shutdown():
 # Endpoints
 # ============================================================================
 
-@app.post("/videos", response_model=VideoOut)
+@api_router.post("/videos", response_model=VideoOut)
 async def upload_video(file: UploadFile = File(...)):
     """Subir un video y lanzar el pipeline en segundo plano."""
     data_dir = settings.data_dir
@@ -154,7 +157,7 @@ async def upload_video(file: UploadFile = File(...)):
     )
 
 
-@app.get("/videos", response_model=List[VideoOut])
+@api_router.get("/videos", response_model=List[VideoOut])
 def list_videos():
     """Listar todos los videos."""
     with Session(_db_module.engine) as session:
@@ -176,7 +179,7 @@ def list_videos():
     ]
 
 
-@app.get("/videos/{video_id}", response_model=VideoOut)
+@api_router.get("/videos/{video_id}", response_model=VideoOut)
 def get_video(video_id: int):
     """Obtener un video por su ID."""
     with Session(_db_module.engine) as session:
@@ -197,7 +200,7 @@ def get_video(video_id: int):
     )
 
 
-@app.get("/videos/{video_id}/moments", response_model=List[MomentOut])
+@api_router.get("/videos/{video_id}/moments", response_model=List[MomentOut])
 def list_moments(video_id: int):
     """Listar los momentos de un video."""
     with Session(_db_module.engine) as session:
@@ -222,7 +225,7 @@ def list_moments(video_id: int):
     ]
 
 
-@app.patch("/moments/{moment_id}", response_model=MomentOut)
+@api_router.patch("/moments/{moment_id}", response_model=MomentOut)
 def edit_moment(moment_id: int, patch: MomentPatch):
     """Editar inicio/fin/titulo de un momento."""
     with Session(_db_module.engine) as session:
@@ -253,7 +256,7 @@ def edit_moment(moment_id: int, patch: MomentPatch):
     )
 
 
-@app.post("/moments/{moment_id}/render")
+@api_router.post("/moments/{moment_id}/render")
 def render_moment(moment_id: int, options: RenderOptions):
     """Renderizar un momento individual a clip."""
     with Session(_db_module.engine) as session:
@@ -309,11 +312,11 @@ def render_moment(moment_id: int, options: RenderOptions):
     return {
         "moment_id": moment_id,
         "clip_path": str(out_path),
-        "download_url": "/clips/{}/download".format(moment_id),
+        "download_url": "/api/clips/{}/download".format(moment_id),
     }
 
 
-@app.get("/clips/{moment_id}/download")
+@api_router.get("/clips/{moment_id}/download")
 def download_clip(moment_id: int):
     """Descargar el clip renderizado de un momento."""
     with Session(_db_module.engine) as session:
@@ -338,7 +341,7 @@ def download_clip(moment_id: int):
     )
 
 
-@app.get("/jobs/{job_id}", response_model=JobOut)
+@api_router.get("/jobs/{job_id}", response_model=JobOut)
 def get_job(job_id: int):
     """Obtener el estado y progreso de un trabajo."""
     job = job_queue.get_job(job_id)
@@ -353,6 +356,20 @@ def get_job(job_id: int):
         error_message=job.error_message,
     )
 
+
+@api_router.get("/health")
+def health_check():
+    """Health check endpoint."""
+    return {"status": "ok"}
+
+
+# Incluir el router con prefijo /api en la app
+app.include_router(api_router)
+
+
+# ============================================================================
+# CLI (para ejecutar el servidor)
+# ============================================================================
 
 def cli():
     import uvicorn
