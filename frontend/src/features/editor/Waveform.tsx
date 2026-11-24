@@ -24,16 +24,15 @@ export function Waveform({ moment }: WaveformProps) {
     const height = rect.height
     const center = height / 2
 
-    // Dibujar una forma de onda simulada (en producción vendría del backend)
     ctx.clearRect(0, 0, width, height)
-    ctx.strokeStyle = 'var(--color-line)'
+    ctx.strokeStyle = 'var(--border)'
     ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(0, center)
     ctx.lineTo(width, center)
     ctx.stroke()
 
-    ctx.strokeStyle = 'var(--color-ion)'
+    ctx.strokeStyle = 'var(--accent-text)'
     ctx.lineWidth = 2
     ctx.beginPath()
     let x = 0
@@ -44,19 +43,18 @@ export function Waveform({ moment }: WaveformProps) {
     }
     ctx.stroke()
 
-    // Región seleccionada (inicio-fin del momento)
     const startX = (moment.start / (moment.end + 10)) * width
     const endX = (moment.end / (moment.end + 10)) * width
-    ctx.fillStyle = 'color-mix(in oklab, var(--color-ion) 30%, transparent)'
+    ctx.fillStyle = 'color-mix(in oklab, var(--accent-text) 30%, transparent)'
     ctx.fillRect(startX, 0, endX - startX, height)
-    ctx.strokeStyle = 'var(--color-ion)'
+    ctx.strokeStyle = 'var(--accent-text)'
     ctx.lineWidth = 2
     ctx.strokeRect(startX, 0, endX - startX, height)
   }, [moment])
 
   return (
     <div className="surface p-3 rounded-panel border border-line">
-      <div className="flex items-center justify-between mb-2 text-xs text-ink-muted">
+      <div className="flex items-center justify-between mb-2 text-xs text-texto-secundario">
         <span>Forma de onda</span>
         <span className="font-mono">{moment.start.toFixed(1)}s – {moment.end.toFixed(1)}s</span>
       </div>

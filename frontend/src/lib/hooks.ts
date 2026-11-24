@@ -79,3 +79,15 @@ export function useJob(jobId: number) {
     },
   })
 }
+
+export function useDeleteVideo() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.deleteVideo(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videos'] })
+    },
+  })
+}
+
+export { useToast } from './useToast'

@@ -5,7 +5,7 @@ description: Arquitectura del frontend de ClipForge (React + Vite + TypeScript) 
 
 # Pantallas y componentes de ClipForge
 
-Combina este skill con `ui-responsive` (adaptación) y `ui-futurista` (estilo). Los tipos de datos vienen del backend (ver AGENTS.md): `Word`, `Moment`, `Transcript`.
+Combina este skill con `ui-responsive` (adaptación) y `ui-sistema-diseno` (estilo) y `ui-layout-seguro` (nada se desborda ni se superpone). Los tipos de datos vienen del backend (ver AGENTS.md): `Word`, `Moment`, `Transcript`.
 
 ## Stack del frontend
 React 18 + Vite + TypeScript, Tailwind, React Router, **TanStack Query** (datos del servidor), Zustand (estado local del editor), `lucide-react`, `wavesurfer.js` con plugin Regions (forma de onda y selección de rango), `@tanstack/react-virtual` si hace falta.
@@ -30,11 +30,11 @@ Regla: `components/ui` no conoce el negocio; `features/*` sí. Los tipos de la A
 
 ### 1. Inicio / Videos (`/`)
 - Arriba: zona de subida. Móvil: botón grande "Elegir video" (abre selector de archivos del sistema). Escritorio: además arrastrar y soltar.
-- Debajo: lista de videos con estado (`transcribing`, `finding_moments`, `ready`, `error`) usando `PipelineStages`.
+- Debajo: lista de videos con estado (`transcribing`, `finding_moments`, `ready`, `error`) usando `StageTracker`.
 - Vacío: una frase y el botón de subir; sin ilustraciones recargadas.
 
 ### 2. Progreso de procesamiento
-- `PipelineStages`: Subida, Transcripción, Búsqueda de momentos, Listo. Vertical en móvil, horizontal en `md+`.
+- `StageTracker` (implementación exacta en `ui-layout-seguro`): Subida, Transcripción, Momentos, Listo. Lista vertical cuando la tarjeta es angosta y 4 columnas cuando es ancha (container query, no breakpoint de pantalla). Solo la etapa activa muestra su detalle. El estado de las etapas sale siempre de `deriveStages(video)`.
 - Muestra porcentaje y tiempo estimado cuando exista; permite cancelar.
 - Error: mensaje claro, causa probable y botón "Reintentar esta etapa".
 
@@ -55,9 +55,9 @@ ClipFrame 9:16 (arriba, sticky)
 Forma de onda + controles de recorte
 Pestañas: Transcripción | Estilo | Exportar  (contenido en bottom sheet)
 ```
-- **ClipFrame**: único elemento con brillo (ver `ui-futurista`). Reproduce el render de baja calidad o el original recortado con subtítulos superpuestos en HTML.
+- **ClipFrame**: marco 9:16 con borde de 1 px `--border` y radio 12 px; mientras procesa muestra una barra de progreso fina de `--accent` en la parte inferior. Sin brillos. Reproduce el render de baja calidad o el original recortado con subtítulos superpuestos en HTML.
 - **TrimControls**: arrastrar bordes de la región en la forma de onda, más botones ±0.1 s y ±1 s, y atajos de teclado (`←/→` mueven el cabezal, `[` y `]` fijan inicio/fin).
-- **TranscriptPicker**: tocar una palabra mueve el cabezal; mantener y arrastrar selecciona un rango que se convierte en inicio/fin. Resalta la palabra activa con `ion`.
+- **TranscriptPicker**: tocar una palabra mueve el cabezal; mantener y arrastrar selecciona un rango que se convierte en inicio/fin. Resalta la palabra activa con `--accent-text`.
 - **StylePanel**: estilo de subtítulos (miniaturas de los 3 estilos), modo de encuadre (Una persona / Automático / Pantalla dividida), interruptor "Quitar silencios y muletillas".
 - **ExportBar**: botón "Exportar clip" fijo abajo en móvil; muestra el progreso y luego "Descargar".
 
@@ -79,7 +79,7 @@ Modelo de Whisper, proveedor/modelo de LLM, estilo de subtítulos por defecto, c
 ## Orden de construcción sugerido
 1. Tokens, fuentes y `components/ui` (Button, Input, Chip, Sheet, Skeleton).
 2. Shell responsive (SideRail + BottomNav) con rutas vacías.
-3. Subida + lista de videos + `PipelineStages` con datos simulados (mock) hasta conectar la API.
+3. Subida + lista de videos + `StageTracker` con datos simulados (mock) hasta conectar la API.
 4. Lista de momentos.
 5. Editor: primero `ClipFrame` + reproductor, luego forma de onda, luego transcripción, luego estilos y exportación.
 6. Ajustes, PWA y pulido.

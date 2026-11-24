@@ -19,6 +19,35 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+FFMPEG_ERROR_MSG = (
+    "FFmpeg no está instalado o no se encuentra en el PATH del sistema. "
+    "Instálalo desde https://ffmpeg.org/download.html y asegúrate de que "
+    "ffmpeg y ffprobe estén accesibles desde la línea de comandos."
+)
+
+
+def _ensure_ffmpeg() -> None:
+    """Verificar que ffmpeg y ffprobe estén disponibles en el sistema.
+
+    Lanza un RuntimeError con un mensaje claro si falta cualquiera de los
+    dos ejecutables.
+    """
+    missing = []
+    for cmd in ("ffmpeg", "ffprobe"):
+        try:
+            subprocess.run(
+                [cmd, "-version"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except FileNotFoundError:
+            missing.append(cmd)
+    if missing:
+        raise RuntimeError(
+            f"{FFMPEG_ERROR_MSG}\nFaltan ejecutables: {', '.join(missing)}"
+        )
+
 
 @dataclass
 class VideoInfo:
@@ -115,6 +144,7 @@ def ingest(video_path: str | Path) -> tuple[VideoInfo, Path]:
 
     Devuelve (VideoInfo, ruta_al_audio).
     """
+    _ensure_ffmpeg()
     info = probe_video(video_path)
     audio_path = extract_audio(video_path)
     return info, audio_path

@@ -17,7 +17,7 @@ export function MomentCard({ moment, isBest = false, onSelect }: MomentCardProps
     <article
       className={[
         'surface p-4 rounded-panel border border-line cursor-pointer group transition-all duration-200',
-        isBest ? 'border-plasma/50 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--color-plasma)40%,transparent)]' : 'hover:border-plasma/50',
+        isBest ? 'border-accent/50 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--accent)40%,transparent)]' : 'hover:border-accent/50',
       ].join(' ')}
       onClick={onSelect}
       role="button"
@@ -30,19 +30,19 @@ export function MomentCard({ moment, isBest = false, onSelect }: MomentCardProps
         </div>
         <div className="flex-1">
           <div className="flex items-start gap-2 mb-1">
-            <h3 className="font-sora font-semibold text-base text-ink group-hover:text-plasma transition-colors line-clamp-1">
+            <h3 className="font-sans font-semibold text-base text-texto group-hover:text-accent transition-colors line-clamp-1">
               {moment.title}
             </h3>
             {isBest && (
-              <Chip variant="plasma" size="sm">Mejor puntuado</Chip>
+              <Chip variant="accent" size="sm">Mejor puntuado</Chip>
             )}
           </div>
-          <p className="text-ink-muted text-xs line-clamp-2">{moment.reason}</p>
-          <div className="mt-3 flex items-center gap-3 text-xs text-ink-muted">
+          <p className="text-texto-secundario text-xs line-clamp-2">{moment.reason}</p>
+          <div className="mt-3 flex items-center gap-3 text-xs text-texto-secundario">
             <span className="font-mono">{formatTime(moment.start)} – {formatTime(moment.end)}</span>
-            <span>·</span>
+            <span className="mx-1">·</span>
             <span className="font-mono">{formatDuration(duration)}</span>
-            <span>·</span>
+            <span className="mx-1">·</span>
             <span>{moment.score}/10</span>
           </div>
         </div>

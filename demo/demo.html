@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Demo ClipForge</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1218;
+      --surface: #151a22;
+      --surface-2: #1b2230;
+      --border: #2a3444;
+      --text: #e8ecf2;
+      --text-muted: #9aa6b8;
+      --text-subtle: #6b778a;
+      --accent: #356ad6;
+      --accent-hover: #2e5dbe;
+      --accent-text: #7fa6f5;
+      --success: #34d399;
+      --warning: #f5b94a;
+      --danger: #f0616d;
+
+      --radius-field: 6px;
+      --radius-card: 12px;
+      --radius-pill: 999px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --ease: cubic-bezier(.2, .7, .2, 1);
+      --dur-fast: 120ms;
+      --dur: 200ms;
+
+      --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --surface-2: #eef2f7;
+      --border: #dde3ec;
+      --text: #141a24;
+      --text-muted: #566377;
+      --text-subtle: #8a95a6;
+      --accent: #2f62d0;
+      --accent-hover: #2753b3;
+      --accent-text: #2f62d0;
+      --success: #0f9f6e;
+      --warning: #b7791f;
+      --danger: #d14343;
+    }
+
+    /* base.css: reset mínimo y tipografía. Importar justo después de tokens.css */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg, #0e1218);
+      color: var(--text, #e8ecf2);
+      /* Fuente escrita con alternativas: si falla la variable, NUNCA cae a serif */
+      font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      min-height: 100dvh;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    p {
+      margin: 0;
+    }
+
+    ul,
+    ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    img,
+    video {
+      max-width: 100%;
+      display: block;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent-text, #7fa6f5);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    /* shell.css: el menú lateral es una COLUMNA de la cuadrícula, no un elemento fijo/absoluto.
+   Por eso nunca puede quedar encima del contenido. */
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      min-height: 100dvh;
+    }
+
+    .shell__side {
+      display: none;
+    }
+
+    .shell__main {
+      min-width: 0;
+      padding: 16px 16px calc(76px + env(safe-area-inset-bottom));
+    }
+
+    .shell__content {
+      max-width: 1280px;
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-width: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 8px;
+    }
+
+    .brand__logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .brand__name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .navlink {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 40px;
+      padding: 0 12px;
+      border-radius: var(--radius-field, 6px);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .navlink:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .navlink[aria-current="page"] {
+      background: var(--surface-2);
+      color: var(--text);
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    /* Barra inferior (móvil y tablet) */
+    .shell__tabs {
+      position: fixed;
+      inset: auto 0 0 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      height: calc(60px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: color-mix(in oklab, var(--surface) 92%, transparent);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+    }
+
+    .tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      min-height: 44px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 11px;
+    }
+
+    .tab[aria-current="page"] {
+      color: var(--accent-text);
+    }
+
+    @media (min-width: 1024px) {
+      .shell {
+        grid-template-columns: 232px minmax(0, 1fr);
+      }
+
+      .shell__side {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: sticky;
+        top: 0;
+        height: 100dvh;
+        align-self: start;
+        padding: 20px 12px;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+      }
+
+      .shell__side nav {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .shell__main {
+        padding: 32px;
+      }
+
+      .shell__tabs {
+        display: none;
+      }
+    }
+
+    /* El contenedor mide el ancho REAL de la tarjeta; las reglas @container se adaptan a él, no a la pantalla */
+    .tracker {
+      container-type: inline-size;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .step {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .step__dot {
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-subtle);
+    }
+
+    .step__label {
+      max-width: 100%;
+      font-size: 12px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* conector hacia el siguiente paso */
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 13px;
+      left: calc(50% + 18px);
+      right: calc(-50% + 18px);
+      height: 2px;
+      background: var(--border);
+    }
+
+    .step[data-status="done"]:not(:last-child)::after {
+      background: var(--success);
+    }
+
+    .step[data-status="active"] .step__dot {
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+
+    .step[data-status="active"] .step__label {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .step[data-status="done"] .step__dot {
+      background: var(--success);
+      border-color: var(--success);
+      color: #06281d;
+    }
+
+    .step[data-status="error"] .step__dot {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .step[data-status="error"] .step__label {
+      color: var(--danger);
+    }
+
+    .tracker__note {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: var(--radius-field, 6px);
+      background: var(--surface-2);
+    }
+
+    .tracker__note[data-status="error"] {
+      background: color-mix(in oklab, var(--danger) 12%, transparent);
+    }
+
+    .tracker__text {
+      font-size: 13px;
+      color: var(--text-muted);
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .tracker__note[data-status="error"] .tracker__text {
+      color: var(--danger);
+    }
+
+    .bar {
+      height: 4px;
+      border-radius: 999px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .bar>span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      border-radius: inherit;
+      transition: width var(--dur, 200ms) var(--ease, ease);
+    }
+
+    .bar[data-indeterminate]>span {
+      width: 40%;
+      animation: slide 1.4s ease-in-out infinite;
+    }
+
+    @keyframes slide {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(250%);
+      }
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Tarjeta muy angosta: pasos en vertical */
+    @container (max-width: 17rem) {
+      .stepper {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .step {
+        flex-direction: row;
+        text-align: left;
+        gap: 10px;
+      }
+
+      .step:not(:last-child)::after {
+        top: 30px;
+        bottom: -12px;
+        left: 13px;
+        right: auto;
+        width: 2px;
+        height: auto;
+      }
+
+      .step__label {
+        font-size: 13px;
+      }
+    }
+
+    .video-grid {
+      display: grid;
+      gap: 16px;
+      align-items: start;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
+    }
+
+    .vcard {
+      min-width: 0;
+      overflow: clip;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card, 12px);
+    }
+
+    .vcard__head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .vcard__title {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .vcard__meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: -8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      height: 24px;
+      padding: 0 10px;
+      white-space: nowrap;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--c);
+      background: color-mix(in oklab, var(--c) 14%, transparent);
+    }
+
+    .badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .badge[data-tone="neutral"] {
+      --c: var(--text-muted);
+    }
+
+    .badge[data-tone="accent"] {
+      --c: var(--accent-text);
+    }
+
+    .badge[data-tone="success"] {
+      --c: var(--success);
+    }
+
+    .badge[data-tone="danger"] {
+      --c: var(--danger);
+    }
+
+    .icon-btn {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      margin: -4px -6px -4px 0;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: 0;
+      border-radius: var(--radius-field, 6px);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .icon-btn:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    @media (pointer: coarse) {
+      .icon-btn {
+        width: 44px;
+        height: 44px;
+      }
+    }
+
+    .upload {
+      padding: 32px 16px;
+      text-align: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card)
+    }
+
+    .upload p {
+      color: var(--text-muted);
+      max-width: 44ch;
+      margin: 8px auto 16px
+    }
+
+    .btn {
+      height: 40px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 500
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <aside class="shell__side">
+      <div class="brand"><span class="brand__logo">CF</span><span class="brand__name">ClipForge</span></div>
+      <nav>
+        <a class="navlink" aria-current="page" href="#">Videos</a><a class="navlink" href="#">Clips</a><a
+          class="navlink" href="#">Ajustes</a>
+      </nav>
+    </aside>
+    <main class="shell__main">
+      <div class="shell__content">
+        <h1>Videos</h1>
+        <section class="upload">
+          <h2 style="font-size:16px;font-weight:600">Subir video</h2>
+          <p>Arrastra un archivo de video o haz clic para buscar en tu computadora. Soporta MP4, MOV, MKV, AVI.</p>
+          <button class="btn">Elegir video</button>
+        </section>
+        <div class="video-grid">
+          <article class="vcard">
+            <header class="vcard__head">
+              <h3 class="vcard__title" title="creacion de demandas.wmv">creacion de demandas.wmv</h3><span class="badge"
+                data-tone="accent">Transcribiendo</span>
+            </header>
+            <p class="vcard__meta mono">20:45.000 · 1920×1080</p>
+            <div class="tracker">
+              <ol class="stepper">
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Subida</span></li>
+                <li class="step" data-status="active"><span class="step__dot"><svg class="spin" width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M21 12a9 9 0 1 1-6.2-8.6" />
+                    </svg></span><span class="step__label">Transcripción</span></li>
+                <li class="step" data-status="pending"><span class="step__dot"></span><span
+                    class="step__label">Momentos</span></li>
+                <li class="step" data-status="pending"><span class="step__dot"></span><span
+                    class="step__label">Listo</span></li>
+              </ol>
+              <div class="tracker__note" data-status="active">
+                <p class="tracker__text">Transcribiendo audio con Whisper</p>
+                <div class="bar"><span style="width:45%"></span></div>
+              </div>
+            </div>
+          </article>
+          <article class="vcard">
+            <header class="vcard__head">
+              <h3 class="vcard__title" title="entrevista_tecnica.mp4">entrevista_tecnica.mp4</h3><span class="badge"
+                data-tone="success">Listo</span>
+            </header>
+            <p class="vcard__meta mono">1:00:00.000 · 1280×720</p>
+            <div class="tracker">
+              <ol class="stepper">
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Subida</span></li>
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Transcripción</span></li>
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Momentos</span></li>
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Listo</span></li>
+              </ol>
+            </div>
+          </article>
+          <article class="vcard">
+            <header class="vcard__head">
+              <h3 class="vcard__title" title="clase_introduccion.mov">clase_introduccion.mov</h3><span class="badge"
+                data-tone="danger">Error</span>
+            </header>
+            <p class="vcard__meta mono">30:00.000 · 1920×1080</p>
+            <div class="tracker">
+              <ol class="stepper">
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Subida</span></li>
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Transcripción</span></li>
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Momentos</span></li>
+                <li class="step" data-status="error"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3" />
+                      <path d="M12 9v4M12 17h.01" />
+                    </svg></span><span class="step__label">Listo</span></li>
+              </ol>
+              <div class="tracker__note" data-status="error">
+                <p class="tracker__text">Fallo en el renderizado: codec no soportado</p>
+              </div>
+            </div>
+          </article>
+          <article class="vcard">
+            <header class="vcard__head">
+              <h3 class="vcard__title"
+                title="nombre_de_archivo_extremadamente_largo_sin_espacios_para_probar_el_desborde_del_titulo_2026_final_v7.mp4">
+                nombre_de_archivo_extremadamente_largo_sin_espacios_para_probar_el_desborde_del_titulo_2026_final_v7.mp4
+              </h3><span class="badge" data-tone="neutral">En cola</span>
+            </header>
+            <p class="vcard__meta mono">2:10:00.000 · 3840×2160</p>
+            <div class="tracker">
+              <ol class="stepper">
+                <li class="step" data-status="done"><span class="step__dot"><svg width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg></span><span class="step__label">Subida</span></li>
+                <li class="step" data-status="pending"><span class="step__dot"></span><span
+                    class="step__label">Transcripción</span></li>
+                <li class="step" data-status="pending"><span class="step__dot"></span><span
+                    class="step__label">Momentos</span></li>
+                <li class="step" data-status="pending"><span class="step__dot"></span><span
+                    class="step__label">Listo</span></li>
+              </ol>
+            </div>
+          </article>
+        </div>
+      </div>
+    </main>
+    <nav class="shell__tabs"><a class="tab" aria-current="page" href="#">Videos</a><a class="tab" href="#">Clips</a><a
+        class="tab" href="#">Ajustes</a></nav>
+  </div>
+</body>
+
+</html>

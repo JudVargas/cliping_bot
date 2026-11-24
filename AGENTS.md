@@ -79,6 +79,7 @@ Todo tiempo está en segundos (float) relativo al video original. Cada etapa gua
 8. Configuración (claves API, modelo, idioma) siempre en `.env`, nunca en el código. Mantener `.env.example` actualizado.
 9. No instalar dependencias pesadas sin avisar (torch, pyannote). Preferir lo ya listado en el stack.
 10. Al terminar cada etapa: resumir qué se hizo, cómo probarlo y qué queda pendiente. Hacer commit con mensaje claro.
+11. **Nunca hacer commits, pushes ni subir cambios a repositorios remotos (GitHub, etc.) sin la autorización explícita del usuario.** El agente debe preguntar antes de cualquier operación de git que suba cambios.
 
 ## Decisiones de diseño importantes
 - **Selección de momentos:** dividir la transcripción en ventanas (~8-10 min con solape de 60 s), pedir al LLM JSON estricto, validar con un esquema, deduplicar solapes y ajustar inicio/fin a límites de frase usando los timestamps de palabras.

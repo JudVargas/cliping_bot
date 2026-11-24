@@ -36,18 +36,18 @@ for (const s of sizes) for (const r of routes) {
 Después de generar las capturas: abrirlas, compararlas y corregir lo que se vea cortado, apretado, desalineado o con poco contraste. Para que funcione sin backend, las rutas `demo` deben usar datos simulados (mock) cuando la variable `VITE_MOCK=1`.
 
 ## 2. Accesibilidad
-- [ ] Foco visible en todo elemento interactivo (`:focus-visible` con anillo `ion` de 2 px y separación de 2 px).
+- [ ] Foco visible en todo elemento interactivo (`:focus-visible` con anillo `--accent-text` de 2 px y separación de 2 px).
 - [ ] Orden de tabulación lógico; sin trampas de foco, salvo en modales y hojas (donde es intencional).
 - [ ] Cada botón con solo icono tiene `aria-label` en español.
 - [ ] Contraste del texto ≥ 4.5:1 (≥ 3:1 en texto grande y en bordes de componentes).
 - [ ] El color nunca es la única señal (estado = color + icono o texto).
-- [ ] `prefers-reduced-motion` respetado: sin marco giratorio ni transiciones largas.
+- [ ] `prefers-reduced-motion` respetado: sin animaciones continuas salvo la barra de progreso.
 - [ ] `lang="es"` en `<html>`; etiquetas `<label>` asociadas a cada campo.
 - [ ] Todo el editor se puede operar con teclado (cabezal, inicio/fin, exportar).
 
 ## 3. Rendimiento (pensando en un celular de gama media)
-- [ ] `backdrop-filter` en máximo 1-2 elementos visibles a la vez.
-- [ ] Animar solo `transform` y `opacity`; evitar animar `box-shadow` grande o `filter`.
+- [ ] `backdrop-filter` solo en la barra inferior y las hojas flotantes.
+- [ ] Animar solo `transform`, `opacity` y color; evitar animar `box-shadow` o `filter`.
 - [ ] Rutas con `React.lazy` (el editor y `wavesurfer` se cargan solo cuando se necesitan).
 - [ ] Imágenes y miniaturas con `loading="lazy"` y dimensiones explícitas (sin saltos de layout).
 - [ ] Fuentes con `font-display: swap` y solo los pesos usados.
@@ -58,13 +58,19 @@ Después de generar las capturas: abrirlas, compararlas y corregir lo que se vea
 Cargando (esqueletos, no spinners genéricos), vacío (una frase + acción), error (qué pasó + cómo arreglarlo + reintentar), éxito (confirmación con el mismo verbo del botón), sin conexión con el backend (mensaje claro, no pantalla en blanco).
 
 ## 5. Consistencia
-- [ ] Solo tokens de color y radios definidos en `tokens.css`; cero hex sueltos en componentes.
+- [ ] Solo tokens de color y radios definidos en `tokens.css` (ver `ui-sistema-diseno`); cero hex sueltos en componentes.
 - [ ] Un solo set de iconos, un solo componente de botón, un solo formateo de tiempos.
 - [ ] Mismo nombre para la misma acción en todos los lugares.
-- [ ] Máximo un elemento con brillo por vista.
+- [ ] Un solo color de acento; sin brillos, sombras de color ni degradados decorativos.
 
 ## 6. Cierre de cada tarea de UI
 1. Ejecutar `npm run build` y `npm run lint` sin errores ni advertencias nuevas.
 2. Generar y revisar las capturas de los 5 tamaños.
 3. Pasar la lista de arriba y corregir lo que falle.
 4. Resumir en 5 líneas qué se hizo, qué se verificó y qué falta. Hacer commit.
+
+## 7. Layout seguro (obligatorio)
+- [ ] Ejecutar `e2e/layout.spec.ts` (ver skill `ui-layout-seguro`) a 320, 360, 390, 768, 1024 y 1440 px: sin desbordes, sin tarjetas superpuestas, sin scroll horizontal.
+- [ ] Probar con datos extremos (`?mock=extremos`): nombre de 80 caracteres sin espacios, 12 videos, error largo.
+- [ ] Todo texto dinámico tiene política explícita (`truncate`, `line-clamp` o `overflow-wrap`).
+- [ ] Todo hijo de flex/grid con texto tiene `min-width: 0`.

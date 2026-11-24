@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import SQLModel, create_engine, Session, text
 
 from app.config import settings
 
@@ -23,8 +23,30 @@ engine = create_engine(
 
 
 def init_db() -> None:
-    """Crear todas las tablas definidas en models.py."""
+    """Crear todas las tablas definidas en models.py y asegurar columnas faltantes."""
     SQLModel.metadata.create_all(engine)
+    _ensure_columns()
+
+
+def _ensure_columns() -> None:
+    """Agregar columnas faltantes a tablas existentes (migración ligera).
+
+    SQLite no soporta ALTER TABLE ADD COLUMN IF NOT EXISTS de forma nativa
+    en versiones antiguas, así que verificamos primero si la columna existe.
+    """
+    with engine.connect() as conn:
+        # Verificar si la columna error_stage ya existe en la tabla video
+        result = conn.execute(
+            text(
+                "SELECT name FROM pragma_table_info('video') "
+                "WHERE name='error_stage'"
+            )
+        )
+        if result.fetchone() is None:
+            conn.execute(
+                text("ALTER TABLE video ADD COLUMN error_stage TEXT")
+            )
+            conn.commit()
 
 
 def get_session() -> Session:

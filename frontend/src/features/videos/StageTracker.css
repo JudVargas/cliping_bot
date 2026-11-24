@@ -1,0 +1,38 @@
+/* El contenedor mide el ancho REAL de la tarjeta; las reglas @container se adaptan a él, no a la pantalla */
+.tracker { container-type: inline-size; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.stepper { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
+.step__dot { position: relative; z-index: 1; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-subtle); }
+.step__label { max-width: 100%; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* conector hacia el siguiente paso */
+.step:not(:last-child)::after { content: ""; position: absolute; top: 13px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 2px; background: var(--border); }
+.step[data-status="done"]:not(:last-child)::after { background: var(--success); }
+
+.step[data-status="active"] .step__dot { border-color: var(--accent); color: var(--accent-text); }
+.step[data-status="active"] .step__label { color: var(--text); font-weight: 500; }
+.step[data-status="done"] .step__dot { background: var(--success); border-color: var(--success); color: #06281d; }
+.step[data-status="error"] .step__dot { border-color: var(--danger); color: var(--danger); }
+.step[data-status="error"] .step__label { color: var(--danger); }
+
+.tracker__note { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 10px 12px; border-radius: var(--radius-field); background: var(--surface-2); }
+.tracker__note[data-status="error"] { background: color-mix(in oklab, var(--danger) 12%, transparent); }
+.tracker__text { font-size: 13px; color: var(--text-muted); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tracker__note[data-status="error"] .tracker__text { color: var(--danger); }
+
+.bar { height: 4px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.bar > span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width var(--dur, 200ms) var(--ease, ease); }
+.bar[data-indeterminate] > span { width: 40%; animation: slide 1.4s ease-in-out infinite; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Tarjeta muy angosta: pasos en vertical */
+@container (max-width: 17rem) {
+  .stepper { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .step { flex-direction: row; text-align: left; gap: 10px; }
+  .step:not(:last-child)::after { top: 30px; bottom: -12px; left: 13px; right: auto; width: 2px; height: auto; }
+  .step__label { font-size: 13px; }
+}

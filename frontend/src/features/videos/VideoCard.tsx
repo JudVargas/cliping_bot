@@ -1,73 +1,104 @@
 import * as React from 'react'
+import { Trash2, AlertTriangle } from 'lucide-react'
+import { useDeleteVideo, useToast } from '../../lib/hooks'
 import { formatTime } from '../../lib/format'
-import { Chip } from '../../components/ui/Chip'
-import { PipelineStages } from './PipelineStages'
-import type { ChipProps } from '../../components/ui/Chip'
+import { StageTracker } from './StageTracker'
+import { deriveStages, type VideoLike } from './stages'
 
 export interface VideoCardProps {
-  video: import('../../lib/types').Video
+  video: VideoLike & { id: number; filename: string; duration?: number; width?: number; height?: number }
   onSelect: (id: number) => void
+  onDelete?: (id: number) => void
 }
 
-export function VideoCard({ video, onSelect }: VideoCardProps) {
-  const STATUS_CONFIG: Record<string, { label: string; variant: ChipProps['variant'] }> = {
-    uploaded: { label: 'Subido', variant: 'default' },
-    transcribing: { label: 'Transcribiendo', variant: 'plasma' },
-    finding_moments: { label: 'Buscando momentos', variant: 'plasma' },
-    ready: { label: 'Listo', variant: 'ok' },
-    error: { label: 'Error', variant: 'flare' },
+export function VideoCard({ video, onSelect, onDelete }: VideoCardProps) {
+  const stages = deriveStages(video)
+  const duration = video.duration !== undefined && video.duration !== null
+  const deleteMutation = useDeleteVideo()
+  const { deleteSuccess, deleteError } = useToast()
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDeleteConfirm(true)
   }
 
-  const status = STATUS_CONFIG[video.status] || STATUS_CONFIG.uploaded
-  const duration = video.duration !== undefined && video.duration !== null
+  const handleConfirmDelete = () => {
+    setShowDeleteConfirm(false)
+    deleteMutation.mutate(video.id, {
+      onSuccess: () => {
+        deleteSuccess(video.filename)
+      },
+      onError: (err: Error) => {
+        deleteError(err.message)
+      },
+    })
+  }
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false)
+  }
+
+  const statusMap: Record<string, 'neutral' | 'accent' | 'success' | 'danger'> = {
+    uploaded: 'neutral',
+    transcribing: 'accent',
+    finding_moments: 'accent',
+    ready: 'success',
+    error: 'danger',
+  }
 
   return (
-    <article
-      className="surface p-3 md:p-4 rounded-panel border border-line cursor-pointer group transition-all duration-200 hover:border-plasma/50 hover:shadow-md"
-      onClick={() => onSelect(video.id)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter') onSelect(video.id) }}
-    >
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 md:gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-sora font-semibold text-sm md:text-base text-ink line-clamp-1 leading-tight">
-            {video.filename}
-          </h3>
-          {duration && (
-            <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-1">
-              <span className="font-mono">{formatTime(video.duration)}</span>
-              {video.width && video.height && (
-                <>
-                  <span>·</span>
-                  <span>{video.width}×{video.height}</span>
-                </>
-              )}
+    <>
+      <article
+        className="vcard"
+        onClick={() => onSelect(video.id)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter') onSelect(video.id) }}
+      >
+        <header className="vcard__head">
+          <h3 className="vcard__title" title={video.filename}>{video.filename}</h3>
+          <span className="badge" data-tone={statusMap[video.status] ?? 'neutral'}>{badgeForStatus(video.status)}</span>
+          <button type="button" className="icon-btn" aria-label={`Eliminar ${video.filename}`} onClick={handleDeleteClick}>
+            <Trash2 size={16} strokeWidth={1.75} />
+          </button>
+        </header>
+        <p className="vcard__meta mono">{duration ? formatTime(video.duration) : '-'} · {video.width && video.height ? `${video.width}×${video.height}` : '-'}</p>
+        <StageTracker stages={stages} />
+      </article>
+
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={handleCancelDelete}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <AlertTriangle size={24} strokeWidth={2} className="modal-icon" />
+              <h2 className="modal-title">¿Eliminar este video?</h2>
             </div>
-          )}
-        </div>
-        <Chip variant={status.variant} size="sm">{status.label}</Chip>
-      </div>
-
-      <PipelineStages
-        stages={{
-          ingest: video.status === 'uploaded' ? { status: 'done', progress: 100 } : { status: 'pending', progress: 0 },
-          transcribe: video.status === 'transcribing' ? { status: 'running', progress: video.progress } : video.status === 'ready' ? { status: 'done', progress: 100 } : { status: 'pending', progress: 0 },
-          moments: video.status === 'finding_moments' ? { status: 'running', progress: video.progress } : video.status === 'ready' ? { status: 'done', progress: 100 } : { status: 'pending', progress: 0 },
-          render: video.status === 'ready' ? { status: 'done', progress: 100 } : { status: 'pending', progress: 0 },
-        }}
-      />
-
-      {video.error_message && (
-        <div className="mt-3 flex items-center gap-1.5 text-[10px] md:text-xs text-flare">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <span className="line-clamp-1">{video.error_message}</span>
+            <p className="modal-text">
+              Se eliminará <strong>"{video.filename}"</strong> y todos sus datos asociados. Esta acción no se puede deshacer.
+            </p>
+            <div className="modal-actions">
+              <button type="button" className="modal-btn modal-btn-cancel" onClick={handleCancelDelete}>
+                Cancelar
+              </button>
+              <button type="button" className="modal-btn modal-btn-delete" onClick={handleConfirmDelete}>
+                Eliminar video
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </article>
+    </>
   )
+}
+
+function badgeForStatus(status: string) {
+  switch (status) {
+    case 'uploaded': return 'En cola'
+    case 'transcribing': return 'Transcribiendo'
+    case 'finding_moments': return 'Buscando momentos'
+    case 'ready': return 'Listo'
+    case 'error': return 'Error'
+    default: return 'Desconocido'
+  }
 }

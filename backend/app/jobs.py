@@ -14,7 +14,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 import app.db as _db_module
 from app.db import init_db
@@ -135,12 +135,14 @@ class JobQueue:
                 session.commit()
                 return
 
+        current_stage: Optional[str] = None
         try:
             video_id_stem = Path(video.path).stem
             data_dir = settings.data_dir / video_id_stem
 
             # Etapa 1: Ingesta si no está hecha
             if video.status == VIDEO_UPLOADED:
+                current_stage = STAGE_INGEST
                 self._update_job_stage(job_id, STAGE_INGEST, 10)
                 self._update_video_status(video.id, VIDEO_TRANSCRIBING, 10)
                 info, audio_path = ingest(video.path)
@@ -156,6 +158,7 @@ class JobQueue:
             # Etapa 2: Transcripción si no existe transcript.json
             transcript_path = data_dir / "transcript.json"
             if not transcript_path.exists():
+                current_stage = STAGE_TRANSCRIBE
                 self._update_job_stage(job_id, STAGE_TRANSCRIBE, 40)
                 self._update_video_status(video.id, VIDEO_TRANSCRIBING, 40)
                 transcribe(video.path)
@@ -163,13 +166,34 @@ class JobQueue:
             # Etapa 3: Selección de momentos si no existe moments.json
             moments_path = data_dir / "moments.json"
             if not moments_path.exists():
+                current_stage = STAGE_MOMENTS
                 self._update_job_stage(job_id, STAGE_MOMENTS, 70)
                 self._update_video_status(video.id, VIDEO_FINDING_MOMENTS, 70)
                 select_moments(video_id_stem)
 
+            # Cargar momentos (desde cache si existe) y guardar en BD para la API
+            moments = select_moments(video_id_stem)
+            with Session(_db_module.engine) as session:
+                existing = session.exec(
+                    select(Moment).where(Moment.video_id == video.id)
+                ).all()
+                if not existing:
+                    for m in moments:
+                        db_moment = Moment(
+                            video_id=video.id,
+                            start=m.start,
+                            end=m.end,
+                            title=m.title,
+                            reason=m.reason,
+                            score=m.score,
+                        )
+                        session.add(db_moment)
+                    session.commit()
+
             # Etapa 4: Render de clips
+            current_stage = STAGE_RENDER
             self._update_job_stage(job_id, STAGE_RENDER, 90)
-            self._update_video_status(video.id, VIDEO_FINDING_MOMENTS, 90)
+            self._update_video_status(video.id, VIDEO_READY, 90)
             render_all_from_moments(video_id_stem)
 
             # Marcar como listo
@@ -177,13 +201,13 @@ class JobQueue:
                 v = session.get(Video, video.id)
                 v.status = VIDEO_READY
                 v.progress = 100.0
-                v.updated_at = datetime.utcnow()
+                v.updated_at = datetime.now(timezone.utc)
                 session.add(v)
 
                 j = session.get(Job, job_id)
                 j.status = JobStatus.DONE
                 j.progress = 100.0
-                j.completed_at = datetime.utcnow()
+                j.completed_at = datetime.now(timezone.utc)
                 session.add(j)
                 session.commit()
 
@@ -195,13 +219,14 @@ class JobQueue:
                 j = session.get(Job, job_id)
                 j.status = JobStatus.ERROR
                 j.error_message = str(exc)
-                j.completed_at = datetime.utcnow()
+                j.completed_at = datetime.now(timezone.utc)
                 session.add(j)
 
                 v = session.get(Video, job.video_id)
                 if v:
                     v.status = VIDEO_ERROR
                     v.error_message = str(exc)
+                    v.error_stage = current_stage
                     session.add(v)
                 session.commit()
 
@@ -220,7 +245,7 @@ class JobQueue:
             if v:
                 v.status = status
                 v.progress = progress
-                v.updated_at = datetime.utcnow()
+                v.updated_at = datetime.now(timezone.utc)
                 session.add(v)
                 session.commit()
 

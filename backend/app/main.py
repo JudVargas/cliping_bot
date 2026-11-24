@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlmodel import Session, select
@@ -33,6 +34,15 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="ClipForge", version="0.1.0")
+
+# CORS para permitir peticiones desde el frontend (localhost:5173)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Router con prefijo /api para todas las rutas
 api_router = APIRouter(prefix="/api")
@@ -341,6 +351,24 @@ def download_clip(moment_id: int):
     )
 
 
+@api_router.get("/jobs", response_model=List[JobOut])
+def list_jobs():
+    """Listar todos los trabajos de la cola."""
+    with Session(_db_module.engine) as session:
+        jobs = session.exec(select(Job).order_by(Job.created_at.desc())).all()
+    return [
+        JobOut(
+            id=j.id,
+            video_id=j.video_id,
+            status=j.status,
+            stage=j.stage,
+            progress=j.progress,
+            error_message=j.error_message,
+        )
+        for j in jobs
+    ]
+
+
 @api_router.get("/jobs/{job_id}", response_model=JobOut)
 def get_job(job_id: int):
     """Obtener el estado y progreso de un trabajo."""
@@ -355,6 +383,39 @@ def get_job(job_id: int):
         progress=job.progress,
         error_message=job.error_message,
     )
+
+
+@api_router.delete("/videos/{video_id}")
+def delete_video(video_id: int):
+    """Eliminar un video y todos sus datos asociados."""
+    with Session(_db_module.engine) as session:
+        video = session.get(Video, video_id)
+        if video is None:
+            raise HTTPException(status_code=404, detail="Video no encontrado")
+
+        video_path = Path(video.path)
+        data_dir = settings.data_dir / Path(video.path).stem
+
+        # Eliminar archivo de video si existe
+        if video_path.exists():
+            try:
+                video_path.unlink()
+            except OSError:
+                pass
+
+        # Eliminar carpeta de datos del video (audio, transcripción, clips, etc.)
+        if data_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(data_dir)
+            except OSError:
+                pass
+
+        # Eliminar de la base de datos
+        session.delete(video)
+        session.commit()
+
+    return {"deleted": True}
 
 
 @api_router.get("/health")

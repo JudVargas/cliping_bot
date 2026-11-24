@@ -1,0 +1,22 @@
+.video-grid { display: grid; gap: 16px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+
+.vcard { min-width: 0; overflow: clip; display: flex; flex-direction: column; gap: 14px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.vcard__head { display: flex; align-items: flex-start; gap: 10px; }
+.vcard__title { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vcard__meta { font-size: 12px; color: var(--text-muted); margin-top: -8px; }
+
+.badge { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; height: 24px; padding: 0 10px; white-space: nowrap;
+  border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--c); background: color-mix(in oklab, var(--c) 14%, transparent); }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge[data-tone="neutral"] { --c: var(--text-muted); }
+.badge[data-tone="accent"]  { --c: var(--accent-text); }
+.badge[data-tone="success"] { --c: var(--success); }
+.badge[data-tone="danger"]  { --c: var(--danger); }
+
+.icon-btn { flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px -4px 0; display: grid; place-items: center;
+  background: transparent; border: 0; border-radius: var(--radius-field); color: var(--text-muted); cursor: pointer; }
+.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+@media (pointer: coarse) { .icon-btn { width: 44px; height: 44px; } }

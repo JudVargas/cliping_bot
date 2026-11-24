@@ -12,38 +12,17 @@ export function ScoreRing({ score, size = 48, thickness = 6 }: ScoreRingProps) {
   const circumference = 2 * Math.PI * ((size - thickness) / 2)
   const offset = circumference * (1 - pct)
 
-  const color =
-    score >= 7 ? 'ok' : score >= 4 ? 'warn' : 'plasma'
+  const color = score >= 7 ? 'success' : score >= 4 ? 'warning' : 'danger'
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg
-        width={size}
-        height={size}
-        className="transform -rotate-90"
-      >
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={(size - thickness) / 2}
-          fill="none"
-          stroke="var(--color-line)"
-          strokeWidth={thickness}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={(size - thickness) / 2}
-          fill="none"
-          stroke={`var(--color-${color})`}
-          strokeWidth={thickness}
-          strokeLinecap="round"
-          style={{ strokeDasharray: circumference, strokeDashoffset: offset, transition: 'stroke-dashoffset 0.5s ease' }}
-        />
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={(size - thickness) / 2} fill="none" stroke="var(--border)" strokeWidth={thickness} />
+        <circle cx={size / 2} cy={size / 2} r={(size - thickness) / 2} fill="none" stroke={`var(--${color})`} strokeWidth={thickness} strokeLinecap="round" style={{ strokeDasharray: circumference, strokeDashoffset: offset, transition: 'stroke-dashoffset 0.5s ease' }} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-sora font-bold text-xs">{score}</span>
-        <span className="text-[10px] text-ink-muted">/10</span>
+        <span className="font-sans font-bold text-xs">{score}</span>
+        <span className="text-[10px] text-texto-muted">/10</span>
       </div>
     </div>
   )

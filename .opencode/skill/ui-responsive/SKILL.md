@@ -27,7 +27,7 @@ Escribe los estilos base para móvil y añade `md:`, `lg:`... solo para ampliar.
 
 ```tsx
 // Shell base
-<div className="min-h-dvh bg-void text-ink lg:grid lg:grid-cols-[72px_1fr]">
+<div className="min-h-dvh bg-bg text-text lg:grid lg:grid-cols-[72px_1fr]">
   <SideRail className="hidden lg:flex" />
   <main className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
     <Outlet />
@@ -51,6 +51,7 @@ Escribe los estilos base para móvil y añade `md:`, `lg:`... solo para ampliar.
 - Usa `touch-action` y `overscroll-behavior` donde haya arrastre horizontal para no pelear con el scroll de la página.
 
 ## Listas, tablas y tarjetas
+- Adaptar las partes internas de una tarjeta a **su ancho** con container queries (`container-type: inline-size` + `@container`), no con breakpoints de pantalla. Ver `ui-layout-seguro`.
 - En móvil, las tablas se convierten en **listas apiladas** (una fila = un bloque con etiqueta/valor), nunca una tabla con scroll horizontal.
 - Si una lista puede superar ~100 elementos, virtualiza (`@tanstack/react-virtual`).
 - Las cuadrículas usan `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` o `repeat(auto-fill, minmax(18rem, 1fr))`.

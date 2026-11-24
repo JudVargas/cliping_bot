@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Upload, Plus, FileText } from 'lucide-react'
+import { Upload, Plus } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 
 export interface UploadZoneProps {
@@ -32,12 +32,7 @@ export function UploadZone({ onFiles, isDropzone = true, accept = 'video/*' }: U
   }
 
   return (
-    <section
-      className={[
-        'surface p-6 md:p-8 rounded-panel border border-line',
-        isDragOver ? 'border-plasma bg-plasma/5' : '',
-        'transition-colors duration-200',
-      ].join('')}
+    <section className={`surface p-3 md:p-4 rounded-panel border border-line cursor-pointer transition-all duration-200 hover:border-accent/50 hover:shadow-md ${isDragOver ? 'border-accent bg-accent/5' : ''}`}
       onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
       onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false) }}
       onDrop={handleDrop}
@@ -49,15 +44,15 @@ export function UploadZone({ onFiles, isDropzone = true, accept = 'video/*' }: U
     >
       <div className="flex flex-col items-center gap-4 text-center">
         {isDragOver && (
-          <div className="flex items-center gap-2 px-3 py-1 rounded-pill bg-plasma/10 text-plasma border border-plasma/30 text-xs font-medium">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-pill bg-accent/10 text-accent border border-accent/30 text-xs font-medium">
             Soltar archivos aquí
           </div>
         )}
-        <div className="w-12 h-12 rounded-panel bg-panel-2 flex items-center justify-center border border-line">
+        <div className="w-12 h-12 rounded-panel bg-surface-2 flex items-center justify-center border border-border">
           <Upload size={24} strokeWidth={2} />
         </div>
-        <h3 className="font-sora font-semibold text-lg">Subir video</h3>
-        <p className="text-ink-muted text-sm max-w-md">
+        <h3 className="font-sans font-semibold text-lg text-texto">Subir video</h3>
+        <p className="text-texto-muted text-sm max-w-md">
           Arrastra un archivo de video o haz clic para buscar en tu computadora.
           Soporta MP4, MOV, MKV, AVI.
         </p>
@@ -71,20 +66,17 @@ export function UploadZone({ onFiles, isDropzone = true, accept = 'video/*' }: U
 
 export function UploadProgress({ progress, filename, onCancel }: { progress: number; filename: string; onCancel: () => void }) {
   return (
-    <section className="surface p-4 rounded-panel border border-line">
+    <section className="surface p-3 rounded-panel border border-line">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-ink">{filename}</span>
-        <span className="text-xs font-mono text-ink-muted">{Math.round(progress)}%</span>
+        <span className="text-xs font-medium text-texto">{filename}</span>
+        <span className="text-[10px] font-mono text-texto-muted">{Math.round(progress)}%</span>
       </div>
-      <div className="w-full bg-panel-2 rounded-pill h-2 overflow-hidden">
-        <div
-          className="h-full bg-ion transition-all duration-300"
-          style={{ width: `${Math.min(100, progress)}%` }}
-        />
+      <div className="w-full bg-surface-2 rounded-pill h-2 overflow-hidden">
+        <div className="h-full bg-accent transition-all duration-300" style={{ width: `${Math.min(100, progress)}%` }} />
       </div>
       <button
         onClick={onCancel}
-        className="mt-2 text-xs text-flare hover:text-flare/80 flex items-center gap-1"
+        className="mt-2 text-[10px] text-accent hover:text-accent-hover flex items-center gap-1"
         aria-label="Cancelar subida"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

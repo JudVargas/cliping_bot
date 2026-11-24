@@ -28,6 +28,7 @@ class Video(SQLModel, table=True):
     height: Optional[int] = None
     fps: Optional[float] = None
     error_message: Optional[str] = None
+    error_stage: Optional[str] = None  # etapa donde falló: ingest | transcribe | moments | render
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)
 
